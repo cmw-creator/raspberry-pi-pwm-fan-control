@@ -1,66 +1,80 @@
 #!/bin/bash
 # fan_control.sh
+# Raspberry Pi Hardware PWM Fan Control Script using pigpio
 # 树莓派硬件PWM风扇控制脚本（使用pigpio）
-# 功能：根据CPU温度自动调节风扇转速，支持启转/停转温度分离
-# 硬件PWM，避免啸叫
+# 
+# Features / 功能：
+# - Automatically adjust fan speed based on CPU temperature / 根据CPU温度自动调节风扇转速
+# - Support hysteresis control with separate start/stop temperatures / 支持启转/停转温度分离
+# - Hardware PWM output, high frequency to avoid fan noise / 硬件PWM，避免啸叫
 
-# --- 配置部分 ---
-FAN_GPIO=18            # 风扇连接GPIO18
-TEMP_MIN_START=45000   # 风扇启动温度 (m°C)
-TEMP_MIN_STOP=35000    # 风扇停止温度 (m°C)
-TEMP_MAX=70000         # 风扇满速温度 (m°C)
+# ============================================
+# Configuration Section / 配置部分
+# ============================================
+FAN_GPIO=18            # Fan connected GPIO pin / 风扇连接GPIO18
+TEMP_MIN_START=45000   # Fan start temperature in m°C / 风扇启动温度 (m°C)
+TEMP_MIN_STOP=35000    # Fan stop temperature in m°C / 风扇停止温度 (m°C)
+TEMP_MAX=70000         # Fan full speed temperature in m°C / 风扇满速温度 (m°C)
 
-PWM_MIN=250000         # 最低PWM频率/占空比值
-PWM_MAX=1000000         # 最高PWM频率/占空比值
+PWM_MIN=250000         # Minimum PWM frequency/duty cycle value / 最低PWM频率/占空比值
+PWM_MAX=1000000        # Maximum PWM frequency/duty cycle value / 最高PWM频率/占空比值
 
-SLEEP_INTERVAL=2       # 循环间隔时间（秒）
+SLEEP_INTERVAL=2       # Loop sleep interval in seconds / 循环间隔时间（秒）
 
-# --- 启动pigpio守护进程 ---
+# ============================================
+# Start pigpio daemon / 启动pigpio守护进程
+# ============================================
 if ! pgrep -x "pigpiod" > /dev/null; then
-    echo "启动pigpiod守护进程..."
+    echo "Starting pigpiod daemon... / 启动pigpiod守护进程..."
     sudo pigpiod
     sleep 1
 fi
 
-echo "初始化GPIO$FAN_GPIO为硬件PWM..."
-# 初始化PWM
+echo "Initializing GPIO$FAN_GPIO as hardware PWM... / 初始化GPIO$FAN_GPIO为硬件PWM..."
+# Initialize PWM / 初始化PWM
 pigs hw 0 $FAN_GPIO 0
 
-# 风扇运行状态变量
+# Fan running status variable / 风扇运行状态变量
 FAN_RUNNING=0
 
-# --- 主循环 ---
+# ============================================
+# Main Loop / 主循环
+# ============================================
 while true
 do
-    # 读取CPU温度 (单位：m°C)
+    # Read CPU temperature (unit: m°C) / 读取CPU温度 (单位：m°C)
     CPU_TEMP=$(cat /sys/class/thermal/thermal_zone0/temp)
     
-    # 判断风扇是否需要启动/停止
+    # Check if fan needs to start/stop / 判断风扇是否需要启动/停止
     if [ $FAN_RUNNING -eq 0 ] && [ $CPU_TEMP -ge $TEMP_MIN_START ]; then
-        # 启动风扇
+        # Start fan / 启动风扇
         FAN_RUNNING=1
-        echo "$(date '+%Y-%m-%d %H:%M:%S') 温度=$((CPU_TEMP/1000))°C 风扇启动"
+        echo "$(date '+%Y-%m-%d %H:%M:%S') Temperature=$((CPU_TEMP/1000))°C Fan Started / 温度=$((CPU_TEMP/1000))°C 风扇启动"
     elif [ $FAN_RUNNING -eq 1 ] && [ $CPU_TEMP -le $TEMP_MIN_STOP ]; then
-        # 停止风扇
+        # Stop fan / 停止风扇
         FAN_RUNNING=0
-        echo "$(date '+%Y-%m-%d %H:%M:%S') 温度=$((CPU_TEMP/1000))°C 风扇停止"
+        echo "$(date '+%Y-%m-%d %H:%M:%S') Temperature=$((CPU_TEMP/1000))°C Fan Stopped / 温度=$((CPU_TEMP/1000))°C 风扇停止"
     fi
 
-    # 计算PWM值
+    # Calculate PWM value / 计算PWM值
     if [ $FAN_RUNNING -eq 1 ]; then
         if [ $CPU_TEMP -ge $TEMP_MAX ]; then
+            # Full speed / 全速
             PWM_VALUE=$PWM_MAX
         else
-            # 线性计算占空比
+            # Linear calculation of duty cycle / 线性计算占空比
             PWM_VALUE=$((PWM_MIN + (CPU_TEMP - TEMP_MIN_START) * (PWM_MAX - PWM_MIN) / (TEMP_MAX - TEMP_MIN_START)))
         fi
-        pigs hp $FAN_GPIO 25000 $PWM_VALUE  # 25kHz PWM，高频避免啸叫
+        # 25kHz PWM, high frequency to avoid fan noise / 25kHz PWM，高频避免啸叫
+        pigs hp $FAN_GPIO 25000 $PWM_VALUE
     else
-        pigs hp $FAN_GPIO 25000 0  # 停止PWM
+        # Stop PWM / 停止PWM
+        pigs hp $FAN_GPIO 25000 0
     fi
 
-    # 输出状态
-    echo "$(date '+%Y-%m-%d %H:%M:%S') 温度=$((CPU_TEMP/1000))°C PWM=$PWM_VALUE"
+    # Output status / 输出状态
+    echo "$(date '+%Y-%m-%d %H:%M:%S') Temperature=$((CPU_TEMP/1000))°C PWM=$PWM_VALUE / 温度=$((CPU_TEMP/1000))°C PWM=$PWM_VALUE"
     
+    # Sleep for interval / 休眠指定时间
     sleep $SLEEP_INTERVAL
 done
