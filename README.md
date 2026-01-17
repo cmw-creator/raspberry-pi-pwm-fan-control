@@ -2,6 +2,8 @@
 
 树莓派硬件PWM风扇控制脚本 / Raspberry Pi Hardware PWM Fan Control Script
 
+⭐ **如果觉得有帮助，请给个 Star！/ If you find it helpful, please give it a Star!** ⭐
+
 ## 功能介绍 / Features
 
 - 根据CPU温度自动调节风扇转速 / Automatically adjust fan speed based on CPU temperature
@@ -15,9 +17,8 @@
 ### 1. 安装pigpio库 / Install pigpio
 
 ```bash
-# 更新系统 / Update system
+# 更新软件包列表 / Update package list
 sudo apt-get update
-sudo apt-get upgrade
 
 # 安装pigpio / Install pigpio
 sudo apt-get install pigpio python3-pigpio
@@ -26,6 +27,9 @@ sudo apt-get install pigpio python3-pigpio
 sudo systemctl enable pigpiod
 sudo systemctl start pigpiod
 ```
+
+> **注意 / Note:** 新版树莓派系统（Raspberry Pi OS Bookworm 或更新版本）已内置pigpio库，可以跳过这一步。
+> If you are using newer Raspberry Pi OS versions (Bookworm or later), pigpio is already pre-installed and you can skip this step.
 
 ### 2. 克隆或下载脚本 / Clone or Download Script
 
@@ -61,8 +65,8 @@ PWM风扇 / PWM Fan:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 引脚 / Pin     | 颜色 / Color    | 树莓派 / Raspberry Pi
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-1. +12V       | 红色 / Red      | 电源 +12V (需要独立电源)
-                                  | Power +12V (Requires separate power)
+1. +5V       | 红色 / Red      | 电源 +5V
+                                  | Power +5V
 2. 地 / GND    | 黑色 / Black    | 地 / GND (任意地引脚)
                                   | GND (Any GND pin)
 3. PWM 控制   | 黄色 / Yellow   | GPIO 18 (可配置)
@@ -100,15 +104,6 @@ PWM风扇 / PWM Fan:
 
 **注意 / Note:** 建议使用GPIO 18（引脚12）连接PWM信号，因为树莓派硬件PWM通道1默认使用GPIO 18。
 It is recommended to use GPIO 18 (Pin 12) for PWM signal as it is the default hardware PWM channel 1.
-
-### 接线示意图 / Wiring Diagram
-
-```
-风扇 +12V (红) ──→ 电源 +12V / Power +12V
-风扇 GND (黑)  ──→ 树莓派 GND / Raspberry Pi GND
-风扇 PWM (黄)  ──→ 树莓派 GPIO 18 / Raspberry Pi GPIO 18
-风扇 反馈 (绿) ──→ 暂不使用 / Not used yet
-```
 
 ## 运行指南 / Usage Guide
 
@@ -268,11 +263,6 @@ A: Yes, but you must use a GPIO pin that supports hardware PWM. Raspberry Pi has
 
 ---
 
-**Q: 需要独立电源吗？**
-A: 建议使用独立的12V电源供电风扇，树莓派GPIO不能直接驱动高功率风扇。
-
-**Q: Do I need a separate power supply?**
-A: It is recommended to use an independent 12V power supply for the fan, as Raspberry Pi GPIO cannot directly drive high-power fans.
 
 ## 相关资源 / Resources
 
