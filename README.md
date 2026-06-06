@@ -4,6 +4,53 @@
 
 ⭐ **如果觉得有帮助，请给个 Star！/ If you find it helpful, please give it a Star!** ⭐
 
+## 🚀 一键安装 / One-Click Installation
+
+```bash
+curl -sSL https://github.com/cmw-creator/raspberry-pi-pwm-fan-control/raw/main/install.sh | sudo bash
+```
+
+或者 / Or：
+
+```bash
+wget -qO- https://github.com/cmw-creator/raspberry-pi-pwm-fan-control/raw/main/install.sh | sudo bash
+```
+
+脚本会自动完成以下操作 / The script will:
+- ✅ 检测树莓派硬件 / Detect Raspberry Pi hardware
+- ✅ 安装 pigpio 库 / Install pigpio library
+- ✅ 安装风扇控制脚本到 `/usr/local/bin/` / Install fan control script
+- ✅ 设置配置文件 `/etc/rpi-fan-control.conf` (可自定义 GPIO 引脚和温度阈值) / Create config file
+- ✅ 创建并启动 systemd 服务 / Create and start systemd service
+- ✅ 设置开机自启 / Enable auto-start on boot
+
+### 安装后管理 / Post-Install Management
+
+```bash
+# 查看状态 / Check status
+sudo systemctl status rpi-fan-control
+
+# 查看实时日志 / View live logs
+sudo journalctl -u rpi-fan-control -f
+
+# 修改配置 / Edit config
+sudo nano /etc/rpi-fan-control.conf
+sudo systemctl restart rpi-fan-control
+
+# 停止 / Stop
+sudo systemctl stop rpi-fan-control
+
+# 卸载 / Uninstall
+sudo systemctl stop rpi-fan-control
+sudo systemctl disable rpi-fan-control
+sudo rm /etc/systemd/system/rpi-fan-control.service
+sudo rm /usr/local/bin/rpi-fan-control
+sudo rm /etc/rpi-fan-control.conf
+sudo systemctl daemon-reload
+```
+
+
+
 ## 功能介绍 / Features
 
 - 根据CPU温度自动调节风扇转速 / Automatically adjust fan speed based on CPU temperature
